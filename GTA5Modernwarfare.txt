@@ -1,0 +1,136 @@
+import pygame
+import random
+import math
+
+# Initialize pygame
+pygame.init()
+
+# Game settings
+WIDTH, HEIGHT = 1200, 800
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("GTA Warfare")
+clock = pygame.time.Clock()
+
+# Load assets
+player_img = pygame.Surface((40, 40))
+player_img.fill((0, 255, 0))
+
+enemy_img = pygame.Surface((40, 40))
+enemy_img.fill((255, 0, 0))
+
+bullet_img = pygame.Surface((10, 5))
+bullet_img.fill((255, 255, 0))
+
+car_img = pygame.Surface((60, 30))
+car_img.fill((0, 0, 255))
+
+# Classes
+class Player:
+    def __init__(self):
+        self.x, self.y = WIDTH // 2, HEIGHT // 2
+        self.speed = 5
+        self.angle = 0
+        self.health = 100
+        self.image = player_img
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+
+    def move(self, keys):
+        if keys[pygame.K_w]:
+            self.y -= self.speed
+        if keys[pygame.K_s]:
+            self.y += self.speed
+        if keys[pygame.K_a]:
+            self.x -= self.speed
+        if keys[pygame.K_d]:
+            self.x += self.speed
+        self.rect.topleft = (self.x, self.y)
+
+    def draw(self):
+        screen.blit(self.image, (self.x, self.y))
+
+class Bullet:
+    def __init__(self, x, y, angle):
+        self.x, self.y = x, y
+        self.speed = 10
+        self.angle = angle
+        self.image = bullet_img
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+
+    def update(self):
+        self.x += math.cos(self.angle) * self.speed
+        self.y += math.sin(self.angle) * self.speed
+        self.rect.topleft = (self.x, self.y)
+
+    def draw(self):
+        screen.blit(self.image, (self.x, self.y))
+
+class Enemy:
+    def __init__(self, x, y):
+        self.x, self.y = x, y
+        self.speed = 2
+        self.image = enemy_img
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+
+    def update(self, player):
+        if self.x < player.x:
+            self.x += self.speed
+        elif self.x > player.x:
+            self.x -= self.speed
+        if self.y < player.y:
+            self.y += self.speed
+        elif self.y > player.y:
+            self.y -= self.speed
+        self.rect.topleft = (self.x, self.y)
+
+    def draw(self):
+        screen.blit(self.image, (self.x, self.y))
+
+class Car:
+    def __init__(self, x, y):
+        self.x, self.y = x, y
+        self.speed = 4
+        self.image = car_img
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+
+    def draw(self):
+        screen.blit(self.image, (self.x, self.y))
+
+# Game objects
+player = Player()
+enemies = [Enemy(random.randint(0, WIDTH), random.randint(0, HEIGHT)) for _ in range(5)]
+bullets = []
+cars = [Car(random.randint(0, WIDTH), random.randint(0, HEIGHT)) for _ in range(3)]
+
+running = True
+while running:
+    clock.tick(60)
+    screen.fill((50, 50, 50))
+
+    # Event handling
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                bullets.append(Bullet(player.x + 20, player.y + 20, 0))
+
+    # Update game objects
+    keys = pygame.key.get_pressed()
+    player.move(keys)
+    for bullet in bullets:
+        bullet.update()
+    for enemy in enemies:
+        enemy.update(player)
+
+    # Draw game objects
+    player.draw()
+    for bullet in bullets:
+        bullet.draw()
+    for enemy in enemies:
+        enemy.draw()
+    for car in cars:
+        car.draw()
+
+    pygame.display.flip()
+
+pygame.quit()
